@@ -1,0 +1,221 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+```{r}
+rm(list=ls())
+
+#isntalling packages
+install.packages('zoo')
+
+library(dplyr)
+library(zoo)
+library(tidyverse)
+```
+
+```{r}
+#downloading dataset
+library(readr)
+df_lowertrop <- read_table("https://www.nsstc.uah.edu/data/msu/v6.0/tlt/uahncdc_lt_6.0.txt")
+
+df_midtrop <- read_table("https://www.nsstc.uah.edu/data/msu/v6.0/tmt/uahncdc_mt_6.0.txt")
+
+df_trop <- read_table("https://www.nsstc.uah.edu/data/msu/v6.0/ttp/uahncdc_tp_6.0.txt")
+
+df_lowstrat <- read_table("https://www.nsstc.uah.edu/data/msu/v6.0/tls/uahncdc_ls_6.0.txt")
+```
+
+```{r}
+df_lowertrop[ , 1]
+#select column based on name
+df_lowertrop[ , "Year"]
+
+#select both length and vector
+df_lowertrop[1:10 , 1]
+
+#subset data on rows, correct but not dynamic!
+df_lowertrop[1:529,]
+tail(df_lowertrop[1:529, ])
+
+#updated the data frame
+df<- df_lowertrop[1:500, ]
+
+#comments starts on $Year equal to "Year", write code that is dynamic
+which(df_lowertrop$Year %in% "Year")
+
+#dynamic select
+df_lowertrop <- df_lowertrop[1:which(df_lowertrop$Year %in% "Year")-1, ]
+
+tail(df_lowertrop)
+
+#Work with the first 5 columns, base R
+df_lowglo1 <- df_lowertrop[ , 1:3]
+df_lowglo1 
+
+df_lowglo1 <- df_lowglo1 %>% mutate_at(vars(Globe), ~as.numeric(.))
+str(df_lowglo1)
+
+df_lowglo1 <- df_lowglo1 %>%
+ group_by(Year) %>%
+  filter(Year>=1980) 
+
+df_lowglo1 <- df_lowglo1 %>%
+  mutate(Date=ym(paste(Year, Mo))) %>% 
+  select(Date, Year, Globe) %>%
+  group_by(Year) %>%
+  filter(Year>=1980) %>%
+  mutate(avg1 = mean(Globe, k=13, fill=NA, align='right'))
+```
+
+```{r}
+df_midtrop[ , 1]
+#select column based on name
+df_midtrop[ , "Year"]
+
+#select both length and vector
+df_midtrop[1:10 , 1]
+
+#subset data on rows, correct but not dynamic!
+df_midtrop[1:529,]
+tail(df_midtrop[1:529, ])
+
+#updated the data frame
+df<- df_midtrop[1:500, ]
+
+#comments starts on $Year equal to "Year", write code that is dynamic
+which(df_midtrop$Year %in% "Year")
+
+#dynamic select
+df_midtrop <- df_midtrop[1:which(df_midtrop$Year %in% "Year")-1, ]
+
+tail(df_midtrop)
+
+#Work with the first 5 columns, base R
+df_midtrop1 <- df_midtrop[ , 1:3]
+df_midtrop1 
+
+df_midtrop1 <- df_midtrop1 %>% mutate_at(vars(Globe), ~as.numeric(.))
+str(df_midtrop1)
+
+df_midtrop1 <- df_midtrop1 %>%
+ group_by(Year) %>%
+  filter(Year>=1980) 
+
+df_midtrop1 <- df_midtrop1 %>%
+  mutate(Date=ym(paste(Year, Mo))) %>% 
+  select(Date, Year, Globe) %>%
+  group_by(Year) %>%
+  filter(Year>=1980) %>%
+  mutate(avg2 = mean(Globe, k=13, fill=NA, align='right'))
+```
+
+```{r}
+df_trop[ , 1]
+#select column based on name
+df_trop[ , "Year"]
+
+#select both length and vector
+df_trop[1:10 , 1]
+
+#subset data on rows, correct but not dynamic!
+df_trop[1:529,]
+tail(df_trop[1:529, ])
+
+#updated the data frame
+df<- df_trop[1:500, ]
+
+#comments starts on $Year equal to "Year", write code that is dynamic
+which(df_trop$Year %in% "Year")
+
+#dynamic select
+df_trop <- df_trop[1:which(df_trop$Year %in% "Year")-1, ]
+
+tail(df_trop)
+
+#Work with the first 5 columns, base R
+df_trop1 <- df_trop[ , 1:3]
+df_trop1 
+
+df_trop1 <- df_trop1 %>% mutate_at(vars(Globe), ~as.numeric(.))
+str(df_trop1)
+
+df_trop1 <- df_trop1 %>%
+ group_by(Year) %>%
+  filter(Year>=1980) 
+   
+df_trop1 <- df_trop1 %>%
+  mutate(Date=ym(paste(Year, Mo))) %>% 
+  select(Date, Year, Globe) %>%
+  group_by(Year) %>%
+  filter(Year>=1980) %>%
+  mutate(avg3 = mean(Globe, k=13, fill=NA, align='right'))
+```
+
+```{r}
+df_lowstrat[ , 1]
+#select column based on name
+df_lowstrat[ , "Year"]
+
+#select both length and vector
+df_lowstrat[1:10 , 1]
+
+#subset data on rows, correct but not dynamic!
+df_lowstrat[1:529,]
+tail(df_lowstrat[1:529, ])
+
+#updated the data frame
+df<- df_lowstrat[1:500, ]
+
+#comments starts on $Year equal to "Year", write code that is dynamic
+which(df_lowstrat$Year %in% "Year")
+
+#dynamic select
+df_lowstrat <- df_lowstrat[1:which(df_lowstrat$Year %in% "Year")-1, ]
+
+
+tail(df_lowstrat)
+
+#Work with the first 5 columns, base R
+df_lowstrat1 <- df_lowstrat[ , 1:3]
+df_lowstrat1 
+
+df_lowstrat1 <- df_lowstrat1 %>% mutate_at(vars(Globe), ~as.numeric(.))
+str(df_lowstrat1)
+
+df_lowstrat1 <- df_lowstrat1 %>%
+ group_by(Year) %>%
+  filter(Year>=1980) 
+
+df_lowstrat1 <- df_lowstrat1 %>%
+  mutate(Date=ym(paste(Year, Mo))) %>% 
+  select(Date, Year, Globe) %>%
+  mutate(avg4 = mean(Globe, k=13, fill=NA, align='right'))
+```
+
+```{r}
+df_average <- df_lowglo1 %>%
+  select(-Globe) %>% #removing Globe data as we dont need it for the plot
+  cbind(Avg2 = df_midtrop1$avg2,
+        Avg3 = df_trop1$avg3,
+        Avg4 = df_lowstrat1$avg4)
+#binding the average of the values we need to the main dataframe
+df_average <- df_average %>% 
+  mutate(Average = (avg1 + Avg2 + Avg3 + Avg4)/4)
+```
+
+```{r}
+df_average %>% 
+  ggplot(aes(x=Date))+
+  geom_line(aes(y=avg1, color="Low Troposphere"))+ #color adds to legend
+  geom_line(aes(y=Avg2, color="Mid-Troposphere"))+
+  geom_line(aes(y=Avg3, color="Tropopause"))+
+  geom_line(aes(y=Avg4, color="Lower Stratosphere"))+
+  geom_line(aes(y=Average, color="Average"))+
+  labs(
+  color="Position in the atmosphere", 
+  title="Rolling average temperature change in the atmosphere over time", 
+  y="Temperature (Celsius)", 
+  x="Year")
+```
