@@ -1,0 +1,103 @@
+---
+title: "Assignment. 3"
+format: html
+editor: visual
+---
+
+```{r}
+rm(list=ls()) 
+
+#dowloading packages
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(zoo)
+library("rvest")
+library(jsonlite)
+library(rjstat)
+library(ggrepel)
+```
+
+# Task. 1
+
+```{r}
+#Read the JSON data from the website to R
+url <- "https://static01.nyt.com/newsgraphics/2021/12/20/us-coronavirus-deaths-2021/ff0adde21623e111d8ce103fedecf7ffc7906264/scatter.json"
+#Making the dataframe
+data <- fromJSON(url)
+df <- as_tibble(data)
+```
+
+```{r}
+#Making a shortcut for the names of the states
+df$names <- state.abb[match(df$name, state.name)]
+df[is.na(df)] <- "DC"
+df <- df %>% 
+  mutate(Share_of_total_vaccinated=fully_vaccinated_pct_of_pop*100)
+```
+
+```{r}
+#Plotting figure that replicates the figure from the website
+df %>%
+  ggplot(aes(x = fully_vaccinated_pct_of_pop, y = deaths_per_100k))+
+  geom_point(aes(col = names), size = 3, alpha=0.5, col="forestgreen")+
+  geom_text(aes(label = names, col = names), size = 3, alpha=0.7, col="black", nudge_y = 0.7, 
+            check_overlap = TRUE, fontface="bold")+
+    
+  geom_text(aes(x = 0.54, y = 19, label = "Lower vaccination rate,
+        higher death rate"),hjust = 0, vjust = 1, size = 3, color = "black")+
+  geom_segment(aes(x = 0.60, y = 16, xend =0.53 , yend = 18),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  geom_text(aes(x = 0.66, y = 14, label = "Higher vaccination rate, 
+        lower death rate"),hjust = 0, vjust = 1, size = 3, color = "black")+
+  geom_segment(aes(x = 0.66, y = 12, xend =0.73 , yend = 10),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  labs(x = "Share of total population fully vaccinated",
+         y = "Avg. monthly deaths per 100,000", title = "Covid-19 deaths since universal adult vaccine eligibility compared with 
+         vaccination rates", 
+         subtitle = "20 avg. monthly deaths per 100,000")+
+ 
+  theme(plot.title=element_text(hjust=0.5),
+        plot.background = element_rect(fill = "white"), 
+        panel.background = element_rect(fill = 'white', color = 'black'),
+        panel.grid.major = element_line(color = 'black', linetype = 'dotted'))+
+        scale_x_continuous(labels = scales::percent)
+```
+
+# Task. 2
+
+```{r}
+#Using lm() function
+lm(deaths_per_100k ~ Share_of_total_vaccinated, data=df)
+```
+
+The Intercept value tells us that when the number of vaccinated percentage of population is at 0, the deaths per 100k would have a mean of 31.15. The coefficient for vaccinated percentage of population is -36.66, this means that there is a negative correlation between share of population vaccinated and the number of deaths per 100,000. If the vaccination percentage was to increase with 1 % the number of deaths per 100,000 would decrease with 36.66
+
+```{r}
+#Plotting figure with the custom line
+df %>%
+  ggplot(aes(x = fully_vaccinated_pct_of_pop, y = deaths_per_100k))+
+  geom_point(aes(col = names), size = 3, alpha=0.5, col="forestgreen")+
+  geom_smooth(method = lm, se = FALSE)+
+  geom_text(aes(label = names, col = names), size = 3, alpha=0.7, col="black", nudge_y = 0.7,
+            check_overlap = TRUE, fontface="bold")+
+  
+  geom_text(aes(x = 0.54, y = 19, label = "Lower vaccination rate,
+        higher death rate"),hjust = 0, vjust = 1, size = 3, color = "black")+
+  geom_segment(aes(x = 0.60, y = 16, xend =0.53 , yend = 18),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  geom_text(aes(x = 0.66, y = 14, label = "Higher vaccination rate, 
+        lower death rate"),hjust = 0, vjust = 1, size = 3, color = "black")+
+  geom_segment(aes(x = 0.66, y = 12, xend =0.73 , yend = 10),
+               arrow = arrow(length = unit(0.3, "cm")), color = "black")+
+  labs(x = "Share of total population fully vaccinated",
+         y = "Avg. monthly deaths per 100,000", title = "Covid-19 deaths since universal adult vaccine eligibility compared with 
+         vaccination rates", 
+         subtitle = "20 avg. monthly deaths per 100,000")+
+
+  theme(plot.title=element_text(hjust=0.5),
+        plot.background = element_rect(fill = "white"), 
+        panel.background = element_rect(fill = 'white', color = 'black'),
+        panel.grid.major = element_line(color = 'black', linetype = 'dotted'))+
+        scale_x_continuous(labels = scales::percent)
+```
