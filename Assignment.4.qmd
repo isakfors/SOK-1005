@@ -1,0 +1,156 @@
+---
+title: "Assignment. 4"
+format: html
+editor: visual
+---
+
+```{r}
+rm(list=ls())
+#Loading packages
+library(tidyverse)
+library(quantmod)
+library(janitor)
+library(lubridate)
+library(zoo)
+library("rvest")
+library(jsonlite)
+library(rjstat)
+library(ggrepel)
+library(readr)
+library(httr)
+```
+
+# Task 1
+
+```{r}
+url <- "https://raw.githubusercontent.com/uit-sok-1005-v23/uit-sok-1005-v23.github.io/main/storedata.csv"
+
+df <- read.csv(url)
+```
+
+```{r}
+df <- df %>% 
+  mutate(Order_Date=as.Date(Order_Date))
+
+Table1 <- df %>%
+  filter(Order_Date >= "2017-10-01" & Order_Date <= "2017-12-31" & (Region == "Region 1"|Region   == "Region 9") & (Customer_Segment == "Corporate" | Customer_Segment == "Consumer"))
+
+Table1 <- Table1 %>% 
+  mutate(month = format(Order_Date, "%m")) %>%  
+  group_by(month, Region, Customer_Segment) %>% 
+  summarise(Total_Sales = sum(Sales))
+```
+
+```{r}
+tot_sales <- df %>%
+  filter(Order_Date >= "2015-01-01" & Order_Date <= "2017-12-31" & (Region == "Region 1"|        Region == "Region 13") )
+
+tot_sales <- tot_sales %>% 
+  mutate(month = format(Order_Date, "%m")) %>%
+  mutate(year = format(Order_Date, "%Y")) %>% 
+  group_by(month,year, Region) %>% 
+  summarise(Tot_Sales = sum(Sales))
+tot_sales$month <- as.factor(tot_sales$month)
+```
+
+```{r}
+tot_sales %>% 
+  ggplot(aes(x=month, y=Tot_Sales, color=Region, group=year))+
+  geom_point()+
+  labs(title = "Monthly total Sales in Region 1 and 13 in (2015 to 2017)",
+       subtitle = "Figure 1",
+       x = "Month",
+       y = "Total Sales")+
+  facet_wrap(~ year, ncol=1)+
+  theme_bw()
+```
+
+```{r}
+Table2 <- tot_sales %>% 
+  pivot_wider(names_from = Region, values_from = Tot_Sales) %>% 
+  mutate(Sales_diff = `Region 13`- `Region 1`) %>% 
+  filter(Sales_diff>0)
+Table2
+```
+
+```{r}
+Table3 <- df %>%
+  filter(Order_Date >= "2017-01-01" & Order_Date <= "2017-12-31" & (Region != "Region 3" | Region != "Region 5" | Region != "Region 8") )
+
+Table3 <- Table3 %>% 
+  group_by(Region, Customer_Segment, Product_Category) %>% 
+  summarise(Average_profit=mean(Profit)) %>% 
+  arrange(desc(Average_profit))
+
+Table3
+```
+
+# Task 2
+
+```{r}
+start_date <- "2010-01-01"
+end_date <- "2022-12-31"
+getSymbols("XOM", src = "yahoo", from =start_date, to=end_date)
+df_xom <- as.data.frame(XOM)
+df_xom <- df_xom %>% 
+  rownames_to_column(var="index") %>% 
+  select(index, everything())
+df_xom
+```
+
+```{r}
+df_xom <- df_xom %>% 
+  mutate(index=as.Date(index)) %>% 
+  filter(index >= as.Date("2010-01-04") & index <= as.Date("2022-12-31"))
+df_xom <- df_xom %>%
+separate(index, into=c("year", "month", "day"), sep="-") %>% 
+  group_by(year,month) %>% 
+  summarise(exxon = weighted.mean(XOM.Adjusted, XOM.Volume)) #Saving the variable as exxon
+df_xom$Date <- as.yearmon(paste(df_xom$year, df_xom$month), "%Y %m")
+```
+
+```{r}
+getSymbols("DCOILBRENTEU", src= "FRED")
+
+df_oil <- as.data.frame(DCOILBRENTEU)
+
+df_oil <- df_oil %>% 
+  rownames_to_column(var="index") %>% 
+  select(index, everything()) %>%
+  mutate(index=as.Date(index)) %>% 
+  filter(index >= as.Date("2010-01-04") & index <= as.Date("2022-12-31"))
+```
+
+```{r}
+df_oil <- df_oil %>%
+separate(index, 
+         into=c("year", "month", "day"), 
+         sep="-") %>% 
+  group_by(year,month) %>% 
+  summarise(oil = mean(DCOILBRENTEU, na.rm = TRUE)) #Saving the monthly arithmetic average values as  “oil”
+df_oil$Date <- as.yearmon(paste(df_oil$year, df_oil$month), "%Y %m")
+```
+
+```{r}
+ggplot(data=df_xom, aes(x=Date, y=exxon))+
+  geom_line(data = df_xom, aes(x=Date, y=exxon), color="cornflowerblue")+
+  geom_line(data=df_oil,aes(x=Date,y=oil), color="brown2")+
+  geom_point(data = df_xom, aes(x=Date, y=exxon), color="cornflowerblue")+
+  geom_point(data=df_oil,aes(x=Date,y=oil), color="brown2")+
+  labs(title = "Exxon Mobile vs Brent Crude Oil Price 2010 to 2022",
+       subtitle = "figure 2",
+       xlabel = "Date",
+       ylabel = "Price")+
+  scale_y_continuous(labels = scales::comma)+
+  theme_bw()
+```
+
+```{r}
+df_total <- cbind(df_oil, df_XOM$exxon)
+df_total <- df_total %>% 
+  rename(exxon=`...5`)
+```
+
+```{r}
+lm(exxon ~ oil, data=df_total)
+```
