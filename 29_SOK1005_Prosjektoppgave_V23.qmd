@@ -1,0 +1,148 @@
+---
+title: "29_SOK1005_Prosjektoppgave_V23"
+author: "29"
+format: html
+editor: visual
+---
+
+# Oppgave 1
+
+```{r}
+rm(list=ls())
+
+#Loading packages
+library(tidyverse)
+library(lubridate)
+library(rjstat)
+library(readr)
+library(haven)
+library(lubridate)
+library(dplyr)
+```
+
+```{r}
+category <- c("Analgesics","Bath Soap","Beer","Bottled Juices","Cereals",
+              "Cheeses","Cigarettes","Cookies","Crackers","Canned Soup",
+              "Dish Detergent","Front-end-candies","Frozen Dinners","Frozen Entrees",
+              "Frozen Juices","Fabric Softeners","Grooming Products","Laundry Detergents",
+              "Oatmeal","Paper Towels","Soft Drinks","Shampoos","Snack Crackers",
+              "Soaps","Toothbrushes","Canned Tuna","Toothpastes","Bathroom Tissues")
+
+letter2number <- function(x) {utf8ToInt(x) - utf8ToInt("A") + 1L}
+seed_number <- sum(letter2number("Adam")) + sum(letter2number("Eva"))
+set.seed(seed_number)
+sample(category, 1)
+```
+
+UPC file:
+
+Movement file:
+
+#### Merging the UPC file with the Movement file:
+
+```{r}
+ccount <- read_dta('ccount.dta', encoding="latin1") # Customer count file. 
+demo <- read_dta('demo.dta', encoding="latin1") # Store demographic file. 
+# Paper towels upc and movement file. 
+UPC_papertowel = read.csv('upcptw.csv',sep=',') 
+Movement_papertowel = read.csv('wptw.csv',sep=',')
+```
+
+```{r}
+#Brands for data analysis. 
+brands <- paste(c("HI DRI", "BOUNTY", "SCOTT", "VIVA"), collapse = "|")
+
+UPC_papertowel <- UPC_papertowel %>%
+  filter(grepl(brands,DESCRIP)) # Filtering brands. 
+UPC_papertowel <- UPC_papertowel %>%
+  mutate(BRAND = str_extract(DESCRIP, brands)) # Adding brands as column. 
+```
+
+```{r}
+#Merging upc and movement by left join by UPC
+Merged = merge(x=UPC_papertowel,y=Movement_papertowel,by="UPC", all.x = TRUE)
+
+#Filter for weeks in 1990
+Merged <- Merged %>%
+  filter(between(WEEK,17,68))
+
+#Adding sales column
+Merged <- Merged %>%
+  group_by(WEEK,STORE,UPC) %>%
+  mutate(SALES = PRICE*MOVE/QTY) %>% #Formula stated in data manual. 
+  filter(SALES > 0) #Filter for sales over 0. 
+
+#removing empty sales column
+Merged <- Merged[,-14]
+```
+
+#### Aggregating the customer count file to weekly data and merging it with the aggregated Movement file
+
+```{r}
+#Date variable. 
+ccount$date <- as.Date(ccount$date, "%y%m%d") 
+
+#Convert to date. 
+ccount <- ccount %>% 
+  mutate(date = as.Date(date)) %>%
+  filter(between(date, as.Date('1990-01-01'), as.Date('1990-12-31')))
+
+#Adding weeks
+ccount <- ccount %>%
+  relocate("week", .before = store) %>%
+  rename(WEEK = week) %>% #Giving same names as Merged dataframe
+  rename(STORE = store)
+```
+
+```{r}
+#Merging aggregated movement file and customer count file
+Merged_ccount = merge(x=Merged,y=ccount,by=c("WEEK","STORE"), all.x = TRUE)
+```
+
+#### Merging the store-specific demographic data with the aggregated Movement file
+
+```{r}
+#Removing column with NA values
+demo <- demo[,-18]
+
+#Giving same names as Merged dataframe
+demo <- demo %>% 
+  rename(STORE = store) 
+```
+
+```{r}
+#Merging demographic data with the aggregated Movement file.
+df_1 = merge(x=Merged_ccount,y=demo,by="STORE", all.x = TRUE)
+
+#Making weeks go from 1 to 52 not 17 to 68
+df_1 <- df %>%
+   mutate(WEEK = WEEK - 16)
+
+#Removing column with 0 observations or NA values.
+df_1 <- df_1 %>%
+  select(-WSTART,-ftgchin,-pharmacy)
+```
+
+#### Writing final dataframe as csv file for sales report
+
+```{r}
+write_csv(df_1, "df_1.csv")
+```
+
+# Oppgave 2
+
+```{r}
+
+```
+
+# Oppgave 3
+
+```{r}
+
+```
+
+# Oppgave 4
+
+```{r}
+
+```
